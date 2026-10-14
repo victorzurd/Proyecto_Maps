@@ -16,19 +16,23 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent { MaterialTheme { RouteScreen() } }
+        setContent { MaterialTheme { RouteScreen(OpenRouteService(BuildConfig.ORS_API_KEY)) } }
     }
 }
 
 @Composable
-fun RouteScreen() {
+fun RouteScreen(routeService: RouteService) {
     var origin by remember { mutableStateOf("") }
     var destination by remember { mutableStateOf("") }
     var result by remember { mutableStateOf<RouteResult?>(null) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var loading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -50,15 +54,29 @@ fun RouteScreen() {
                 modifier = Modifier.fillMaxWidth()
             )
             Button(
-                onClick = { result = RouteResult(12.5, 24, 1.50) },
-                enabled = origin.isNotBlank() && destination.isNotBlank(),
+                onClick = {
+                    scope.launch {
+                        loading = true
+                        error = null
+                        result = null
+                        try {
+                            result = RouteUseCase(routeService).calculate(origin, destination)
+                        } catch (exception: Exception) {
+                            error = exception.message ?: "No se pudo calcular la ruta"
+                        } finally {
+                            loading = false
+                        }
+                    }
+                },
+                enabled = origin.isNotBlank() && destination.isNotBlank() && !loading,
                 modifier = Modifier.fillMaxWidth()
-            ) { Text("Buscar ruta") }
+            ) { Text(if (loading) "Consultando OpenRouteService…" else "Buscar ruta") }
             result?.let {
                 Text("Distancia: ${it.distanceKm} km")
                 Text("Duración: ${it.durationMinutes} min")
                 Text("Coste estimado: ${"%.2f".format(it.estimatedCostEuro)} €")
             }
+            error?.let { Text("Error: $it", color = MaterialTheme.colorScheme.error) }
         }
     }
 }

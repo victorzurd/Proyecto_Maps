@@ -14,7 +14,11 @@ class RouteScreenTest {
 
     @Test
     fun `buscar está deshabilitado hasta completar origen y destino`() {
-        compose.setContent { RouteScreen() }
+        val fakeRouteService = object : RouteService {
+            override suspend fun calculate(origin: String, destination: String) =
+                RouteResult(12.5, 24, 1.50)
+        }
+        compose.setContent { RouteScreen(fakeRouteService) }
         compose.onNodeWithText("Buscar ruta").assertIsNotEnabled()
         compose.onNodeWithText("Origen").performTextInput("Castellón")
         compose.onNodeWithText("Destino").performTextInput("Valencia")
