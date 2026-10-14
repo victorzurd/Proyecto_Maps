@@ -3,7 +3,9 @@ package es.uji.rutaspike
 data class RouteResult(
     val distanceKm: Double,
     val durationMinutes: Int,
-    val estimatedCostEuro: Double
+    val estimatedCostEuro: Double,
+    /** Coordenadas GeoJSON ordenadas [longitud, latitud]. */
+    val geometry: List<List<Double>> = emptyList()
 )
 
 /** Abstracción que permitirá sustituir la API real por un mock en pruebas. */

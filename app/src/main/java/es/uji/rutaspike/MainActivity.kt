@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -36,7 +38,7 @@ fun RouteScreen(routeService: RouteService) {
 
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier.padding(24.dp),
+            modifier = Modifier.padding(24.dp).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text("Calcula una ruta", style = MaterialTheme.typography.headlineMedium)
@@ -77,6 +79,8 @@ fun RouteScreen(routeService: RouteService) {
                 Text("Coste estimado: ${"%.2f".format(it.estimatedCostEuro)} €")
             }
             error?.let { Text("Error: $it", color = MaterialTheme.colorScheme.error) }
+            result?.let { RouteMap(it) }
         }
     }
 }
+

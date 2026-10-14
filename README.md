@@ -16,7 +16,7 @@ Aplicación Android nativa mínima para comprobar Kotlin, Compose, pruebas autom
 1. Abrir esta carpeta en Android Studio (Koala o posterior) y aceptar la sincronización de Gradle.
 2. Instalar Android SDK Platform 36 y seleccionar un emulador Android o un dispositivo conectado.
 3. Crear una cuenta y una clave de API gratuita en [OpenRouteService](https://openrouteservice.org/dev/#/signup).
-4. En el `local.properties` de la raíz, añade una línea `ORS_API_KEY=tu_clave` (sin comillas). No sustituyas la línea `sdk.dir` que Android Studio ya haya creado.
+4. En el `local.properties` de la raíz añade `ORS_API_KEY=...` (sin comillas). No sustituyas la línea `sdk.dir` que Android Studio ya haya creado.
 5. Sincroniza Gradle y ejecuta la configuración `app`.
 6. Ejecuta `testDebugUnitTest` para JUnit/Mockito y `connectedDebugAndroidTest` con emulador para la prueba de Compose.
 
@@ -27,16 +27,16 @@ Se requiere JDK 17. El proyecto incluye Gradle Wrapper.
 | Necesidad | API candidata | Qué validar en la siguiente iteración |
 |---|---|---|
 | Geocodificar nombres y calcular distancia, duración y geometría | OpenRouteService Geocoding + Directions (REST/JSON/GeoJSON; requiere clave) | La integración de aprendizaje ya está implementada en `OpenRouteService.kt` |
-| Mapa Android e interacción de selección de puntos | Mapbox Maps SDK para Android | mostrar mapa, obtener coordenadas al tocar y dibujar LineString; confirmar coste y condiciones de uso |
+| Mapa Android e interacción de selección de puntos | MapLibre Native Android (integrado con `AndroidView` en Compose) | Ya muestra un mapa y dibuja la LineString de OpenRouteService; queda añadir selección de coordenadas al tocar |
 | Persistencia local | Room sobre SQLite | guardar y recuperar lugares/rutas mediante DAO y pruebas con base temporal |
 | Estado de pantalla y llamadas asíncronas | ViewModel + Kotlin Coroutines/Flow | separar UI/lógica y representar carga, éxito y error |
 
-La clave se lee localmente desde `local.properties`, archivo excluido de Git. Al ser una app cliente, la clave incluida en un APK puede extraerse; esta técnica es solo para el spike, no para producción. La API devuelve coordenadas en orden [longitud, latitud] y la ruta en GeoJSON. El mapa Mapbox todavía no está integrado; es el siguiente experimento recomendado para dibujar la geometría de la ruta.
+MapLibre no necesita token de Mapbox. El ejemplo carga el estilo de demostración de MapLibre (`demotiles.maplibre.org`) y por eso requiere Internet; para producción habrá que elegir un proveedor de teselas y respetar sus condiciones y atribución. OpenRouteService se configura localmente en `local.properties`, que está excluido de Git. La API entrega coordenadas GeoJSON en orden [longitud, latitud].
 
 ## Conclusión del spike
 
-La viabilidad de Kotlin + Compose y de la integración real de OpenRouteService queda abordada. Mockito permite probar el caso de uso sin depender de red ni de claves. Mapbox y persistencia local con Room quedan pendientes de un spike posterior.
+La viabilidad básica de Kotlin + Compose, OpenRouteService y MapLibre queda abordada: la ruta calculada se dibuja sobre el mapa. Mockito permite probar el caso de uso sin depender de red ni claves. Persistencia local con Room queda pendiente de un spike posterior.
 
 ## Uso de IA generativa
 
-Se usó ChatGPT para revisar los documentos de la entrega, proponer el alcance mínimo del spike y generar una primera estructura de Compose y pruebas. Interacción: «hazme el spike del proyecto queremos hacer un proyecto asi Aplicación móvil nativa: Jetpack Compose + Kotlin (tests con JUnit + Mockito) el spike a de ser algo muy basico que sirva para saber como funciona la tecnologia de kotlin y jetpack compose y las apis que haya que usar». La respuesta se utilizó como borrador y se contrastó con la rúbrica y los requisitos adjuntos. Aporta velocidad para crear el esqueleto; puede proponer dependencias o APIs incompatibles con el entorno y no sustituye la validación del equipo. La respuesta de rutas del spike es simulada, así que no demuestra todavía conectividad real ni precisión de rutas.
+Se usó ChatGPT para revisar los documentos de la entrega, proponer el alcance mínimo del spike y generar una primera estructura de Compose, APIs y pruebas. Interacción inicial: «hazme el spike del proyecto queremos hacer un proyecto asi Aplicación móvil nativa: Jetpack Compose + Kotlin (tests con JUnit + Mockito) el spike a de ser algo muy basico que sirva para saber como funciona la tecnologia de kotlin y jetpack compose y las apis que haya que usar». También se usó para sustituir Mapbox por MapLibre tras identificar que Mapbox requiere añadir un método de pago para crear tokens adicionales. Las sugerencias se contrastaron con la rúbrica, los requisitos y la documentación oficial. La IA aceleró el esqueleto, pero propuso una integración que necesitaba credenciales de pago y sus cambios de Gradle requirieron correcciones. La ruta usa ahora la API real de OpenRouteService; la precisión y robustez deben validarse con pruebas del equipo.

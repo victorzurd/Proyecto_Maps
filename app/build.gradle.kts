@@ -50,6 +50,8 @@ dependencies {
     androidTestImplementation(composeBom)
 
     implementation("androidx.activity:activity-compose:1.12.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
+    implementation("org.maplibre.gl:android-sdk-opengl:13.5.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui-tooling-preview")
