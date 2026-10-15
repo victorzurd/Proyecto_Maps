@@ -6,6 +6,14 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+// Las pruebas contra servicios externos solo se ejecutan si se activan expresamente.
+tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+    systemProperty(
+        "runOrsIntegrationTests",
+        providers.gradleProperty("runOrsIntegrationTests").orElse("false").get()
+    )
+}
+
 val localProperties = Properties().apply {
     val file = rootProject.file("local.properties")
     if (file.exists()) file.inputStream().use { load(it) }

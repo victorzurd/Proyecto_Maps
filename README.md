@@ -9,6 +9,7 @@ Aplicación Android nativa mínima para comprobar Kotlin, Compose, pruebas autom
 - Separación de lógica mediante `RouteUseCase` y la abstracción `RouteService`; `OpenRouteService` adapta la API real.
 - Llamadas HTTP asíncronas con Retrofit y coroutines, parseo de GeoJSON y presentación de errores.
 - Prueba unitaria JUnit con Mockito que sustituye el servicio por un mock.
+- Prueba de integración opcional contra la API real con márgenes plausibles para Castellón–Valencia.
 - Prueba de interfaz Compose que introduce datos, pulsa el botón y comprueba el resultado.
 
 ## Abrir y ejecutar
@@ -18,7 +19,8 @@ Aplicación Android nativa mínima para comprobar Kotlin, Compose, pruebas autom
 3. Crear una cuenta y una clave de API gratuita en [OpenRouteService](https://openrouteservice.org/dev/#/signup).
 4. En el `local.properties` de la raíz añade `ORS_API_KEY=...` (sin comillas). No sustituyas la línea `sdk.dir` que Android Studio ya haya creado.
 5. Sincroniza Gradle y ejecuta la configuración `app`.
-6. Ejecuta `testDebugUnitTest` para JUnit/Mockito y `connectedDebugAndroidTest` con emulador para la prueba de Compose.
+6. Ejecuta `testDebugUnitTest` para los tests unitarios con Mockito y `connectedDebugAndroidTest` con emulador para la prueba de Compose.
+7. Para consultar también la API real, activa la prueba de integración con `gradlew.bat :app:testDebugUnitTest --tests es.uji.rutaspike.OpenRouteServiceIntegrationTest -PrunOrsIntegrationTests=true`. Necesita Internet y `ORS_API_KEY`; comprueba que la distancia entre Castelló de la Plana y València esté entre 55–110 km y la duración entre 20–150 min. Si no se activa la propiedad, esta prueba queda omitida.
 
 Se requiere JDK 17. El proyecto incluye Gradle Wrapper.
 
