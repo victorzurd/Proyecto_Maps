@@ -5,7 +5,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 
-/** Prueba opcional que consulta la API real; no reemplaza los unit tests con Mockito. */
 class OpenRouteServiceIntegrationTest {
     @Test
     fun `API real devuelve una ruta razonable entre Castellon de la Plana y Valencia`() {
