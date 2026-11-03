@@ -8,15 +8,15 @@ on:
 
 jobs:
   check-conventions:
-    name: Validate Branch, Commit & PR Naming
+    name: "Validate Branch, Commit & PR Naming"
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository with history
+      - name: "Checkout repository with history"
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
 
-      - name: Check Branch Name Convention (main, it-nn, h-xx)
+      - name: "Check Branch Name Convention (main, it-nn, h-xx)"
         run: |
           BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
           echo "Checking branch name: $BRANCH"
@@ -26,7 +26,7 @@ jobs:
           fi
           echo "Branch name '$BRANCH' is valid."
 
-      - name: Check Commit Message Convention (<type>(itnnhxx): <description>)
+      - name: "Check Commit Message Convention"
         run: |
           MSG=$(git log -1 --pretty=%s)
           echo "Checking latest commit message: $MSG"
@@ -40,7 +40,7 @@ jobs:
           fi
           echo "Commit message format is valid."
 
-      - name: Check Pull Request Title Convention (ITnn-Hxx or ITnn)
+      - name: "Check Pull Request Title Convention (ITnn-Hxx or ITnn)"
         if: github.event_name == 'pull_request'
         env:
           PR_TITLE: ${{ github.event.pull_request.title }}
@@ -53,34 +53,34 @@ jobs:
           echo "PR title is valid."
 
   build-and-test:
-    name: Build & Run Acceptance Tests
+    name: "Build & Run Acceptance Tests"
     needs: check-conventions
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: "Checkout repository"
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      - name: "Set up JDK 21"
         uses: actions/setup-java@v5
         with:
           java-version: '21'
           distribution: 'temurin'
           cache: gradle
 
-      - name: Normalize gradlew line endings and permissions
+      - name: "Normalize gradlew line endings and permissions"
         run: |
           sed -i 's/\r$//' gradlew
           chmod +x gradlew
 
-      - name: Compile App and Acceptance Tests (Must Pass)
+      - name: "Compile App and Acceptance Tests (Must Pass)"
         run: ./gradlew assembleDebug compileDebugUnitTestKotlin
 
-      - name: Run Unit & Acceptance Tests (ATDD Report)
+      - name: "Run Unit & Acceptance Tests (ATDD Report)"
         continue-on-error: true
         run: ./gradlew testDebugUnitTest --continue
 
-      - name: Upload Test Report Artifact
+      - name: "Upload Test Report Artifact"
         if: always()
         uses: actions/upload-artifact@v4
         with:
