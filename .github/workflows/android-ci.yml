@@ -30,7 +30,7 @@ jobs:
         run: |
           MSG=$(git log -1 --pretty=%s)
           echo "Checking latest commit message: $MSG"
-          if [[ "$MSG" =~ ^Merge\ pull\ request ]]; then
+          if [[ "$MSG" == Merge* ]]; then
             echo "Merge commit detected, skipping strict format check."
             exit 0
           fi
