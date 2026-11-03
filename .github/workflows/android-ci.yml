@@ -7,8 +7,54 @@ on:
     branches: [ "main", "it-*" ]
 
 jobs:
+  check-conventions:
+    name: Validate Branch, Commit & PR Naming
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository with history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check Branch Name Convention (main, it-nn, h-xx)
+        run: |
+          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}"
+          echo "Checking branch name: $BRANCH"
+          if [[ ! "$BRANCH" =~ ^(main|Spike|it-[0-9]{2}|h-[0-9]{2})$ ]]; then
+            echo "::error::Invalid branch name '$BRANCH'. Expected 'main', 'it-nn' (e.g., it-01) or 'h-xx' (e.g., h-01)."
+            exit 1
+          fi
+          echo "Branch name '$BRANCH' is valid."
+
+      - name: Check Commit Message Convention (<type>(itnnhxx): <description>)
+        run: |
+          MSG=$(git log -1 --pretty=%s)
+          echo "Checking latest commit message: $MSG"
+          if [[ "$MSG" =~ ^Merge\ pull\ request ]]; then
+            echo "Merge commit detected, skipping strict format check."
+            exit 0
+          fi
+          if [[ ! "$MSG" =~ ^(test|feat|refactor|fix|chore|docs)\(it[0-9]{2}(h[0-9]{2})?\):\ .+ ]]; then
+            echo "::error::Invalid commit message: '$MSG'. Expected format: <type>(itnnhxx): <description in english>"
+            exit 1
+          fi
+          echo "Commit message format is valid."
+
+      - name: Check Pull Request Title Convention (ITnn-Hxx or ITnn)
+        if: github.event_name == 'pull_request'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          echo "Checking PR title: $PR_TITLE"
+          if [[ ! "$PR_TITLE" =~ ^IT[0-9]{2}(-H[0-9]{2})?(:.*)?$ ]]; then
+            echo "::error::Invalid PR title: '$PR_TITLE'. Expected 'ITnn-Hxx: description' (e.g., IT01-H01: user registration) or 'ITnn'."
+            exit 1
+          fi
+          echo "PR title is valid."
+
   build-and-test:
     name: Build & Run Acceptance Tests
+    needs: check-conventions
     runs-on: ubuntu-latest
 
     steps:

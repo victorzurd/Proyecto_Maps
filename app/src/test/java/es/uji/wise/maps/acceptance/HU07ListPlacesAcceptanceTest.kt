@@ -13,14 +13,20 @@ import org.junit.jupiter.api.Test
 class HU07ListPlacesAcceptanceTest {
 
     @Test
-    fun E1 Valido - Consulta con lugares registrados y ordenacion() {
+    fun `E1 Valido - Consulta con lugares registrados y ordenacion`() {
         // GIVEN un usuario autenticado con los siguientes lugares guardados
         val email = "juan@example.com"
         val sessionManager = SessionManager(Session(email = email, autenticado = true))
         val placeRepository = InMemoryPlaceRepository(
             mapOf(
                 email to listOf(
-                    PlaceOfInterest("Castellón de la Plana", 39.986, -0.051, favorito = false, ordenAlta = 1),
+                    PlaceOfInterest(
+                        "Castellón de la Plana",
+                        39.986,
+                        -0.051,
+                        favorito = false,
+                        ordenAlta = 1
+                    ),
                     PlaceOfInterest("Valencia", 39.469, -0.376, favorito = true, ordenAlta = 2),
                     PlaceOfInterest("Madrid", 40.416, -3.703, favorito = false, ordenAlta = 3)
                 )
@@ -34,14 +40,20 @@ class HU07ListPlacesAcceptanceTest {
         // THEN el sistema devuelve la lista ordenada (favoritos primero, y el resto por orden de alta)
         val esperado = listOf(
             PlaceOfInterest("Valencia", 39.469, -0.376, favorito = true, ordenAlta = 2),
-            PlaceOfInterest("Castellón de la Plana", 39.986, -0.051, favorito = false, ordenAlta = 1),
+            PlaceOfInterest(
+                "Castellón de la Plana",
+                39.986,
+                -0.051,
+                favorito = false,
+                ordenAlta = 1
+            ),
             PlaceOfInterest("Madrid", 40.416, -3.703, favorito = false, ordenAlta = 3)
         )
         assertEquals(esperado, resultado)
     }
 
     @Test
-    fun E3 Invalido - Consulta sin autenticacion() {
+    fun `E3 Invalido - Consulta sin autenticacion`() {
         // GIVEN un entorno sin sesión activa
         val sessionManager = SessionManager(initialSession = null)
         val placeRepository = InMemoryPlaceRepository()
