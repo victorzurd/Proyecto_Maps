@@ -1,6 +1,18 @@
 package es.uji.wise.maps.ui.map
 
+import android.annotation.SuppressLint
 import android.graphics.Color as AndroidColor
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -9,8 +21,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -31,20 +47,21 @@ import org.maplibre.geojson.Feature
 import org.maplibre.geojson.FeatureCollection
 import org.maplibre.geojson.Point
 
-private const val MAP_STYLE_URL = "https://demotiles.maplibre.org/style.json"
+private const val MAP_STYLE_LIGHT_URL = "https://tiles.openfreemap.org/styles/liberty"
+private const val MAP_STYLE_DARK_URL = "https://tiles.openfreemap.org/styles/dark"
 private const val SAVED_PLACES_SOURCE_ID = "wise-saved-places-source"
 private const val SAVED_PLACES_LAYER_ID = "wise-saved-places-layer"
 private const val SELECTED_POINT_SOURCE_ID = "wise-selected-point-source"
 private const val SELECTED_POINT_LAYER_ID = "wise-selected-point-layer"
 
 private val DEFAULT_CENTER_UJI = LatLng(39.9945, -0.0688)
-private const val DEFAULT_ZOOM = 10.5
+private const val DEFAULT_ZOOM = 14.0
 
 /**
- * Componente interactivo de mapa basado en MapLibre GL Native (SDK 13.5.3).
- * Permite pulsar sobre el mapa para capturar coordenadas (HU-05) y renderiza
- * los marcadores de los lugares guardados y del punto seleccionado.
+ * Componente interactivo de mapa basado en MapLibre GL Native (SDK 13.5.3)
+ * usando tiles vectoriales OpenFreeMap (OpenStreetMap completo con calles y edificios).
  */
+@SuppressLint("ClickableViewAccessibility")
 @Composable
 fun WiseMapView(
     places: List<PlaceOfInterest>,
@@ -57,10 +74,16 @@ fun WiseMapView(
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val latestOnMapClick by rememberUpdatedState(onMapClick)
+    val styleUrl = if (isSystemInDarkTheme()) MAP_STYLE_DARK_URL else MAP_STYLE_LIGHT_URL
 
     val mapView = remember(context) {
         MapLibre.getInstance(context.applicationContext)
-        MapView(context)
+        MapView(context).apply {
+            setOnTouchListener { view, _ ->
+                view.parent?.requestDisallowInterceptTouchEvent(true)
+                false
+            }
+        }
     }
 
     var map by remember { mutableStateOf<MapLibreMap?>(null) }
@@ -104,7 +127,8 @@ fun WiseMapView(
         }
     }
 
-    LaunchedEffect(mapView) {
+    LaunchedEffect(mapView, styleUrl) {
+        styleLoaded = false
         mapView.getMapAsync { readyMap ->
             map = readyMap
             readyMap.moveCamera(CameraUpdateFactory.newLatLngZoom(DEFAULT_CENTER_UJI, DEFAULT_ZOOM))
@@ -112,7 +136,7 @@ fun WiseMapView(
                 latestOnMapClick(latLng.latitude, latLng.longitude)
                 true
             }
-            readyMap.setStyle(MAP_STYLE_URL) {
+            readyMap.setStyle(styleUrl) {
                 styleLoaded = true
             }
         }
@@ -171,13 +195,54 @@ fun WiseMapView(
         readyMap.animateCamera(
             CameraUpdateFactory.newLatLngZoom(
                 LatLng(target.latitud, target.longitud),
-                12.5
+                14.5
             )
         )
     }
 
-    AndroidView(
-        factory = { mapView },
-        modifier = modifier
-    )
+    Box(modifier = modifier) {
+        AndroidView(
+            factory = { mapView },
+            modifier = Modifier.fillMaxSize()
+        )
+
+        Column(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 10.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            MapControlButton(
+                label = "+",
+                onClick = { map?.animateCamera(CameraUpdateFactory.zoomIn()) }
+            )
+            MapControlButton(
+                label = "−",
+                onClick = { map?.animateCamera(CameraUpdateFactory.zoomOut()) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun MapControlButton(
+    label: String,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(10.dp),
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.94f),
+        shadowElevation = 4.dp,
+        modifier = Modifier.size(36.dp)
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = label,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
 }
