@@ -5,6 +5,7 @@ import es.uji.wise.maps.model.InvalidUserDataException
 import es.uji.wise.maps.model.Session
 import es.uji.wise.maps.model.User
 import es.uji.wise.maps.model.InvalidCredentialsException
+import es.uji.wise.maps.model.NoActiveSessionException
 import es.uji.wise.maps.repository.UserRepository
 
 class AuthService(
@@ -54,7 +55,10 @@ class AuthService(
      * HU-03: Cierre de sesión
      */
     fun logout() {
-        throw NotImplementedError("Not implemented")
+        if (sessionManager.sesionActiva == null) {
+            throw NoActiveSessionException()
+        }
+        sessionManager.sesionActiva = null
     }
 
     companion object {

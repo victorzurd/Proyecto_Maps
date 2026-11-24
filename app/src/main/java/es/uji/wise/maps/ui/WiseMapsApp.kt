@@ -183,6 +183,7 @@ fun WiseMapsApp(
                 onTermsAcceptanceChange = authViewModel::onTermsAcceptanceChange,
                 onRequestPasswordRecovery = authViewModel::requestPasswordRecovery,
                 onSubmit = authViewModel::submit,
+                onLogout = authViewModel::logout,
                 onGoToMap = { currentDestination = WiseDestination.MAP },
                 onDismissBanner = authViewModel::dismissBanner,
                 modifier = screenModifier
