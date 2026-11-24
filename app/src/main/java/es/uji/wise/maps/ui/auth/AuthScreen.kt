@@ -69,6 +69,7 @@ fun AuthScreen(
     onTermsAcceptanceChange: (Boolean) -> Unit,
     onRequestPasswordRecovery: () -> Unit,
     onSubmit: () -> Unit,
+    onLogout: () -> Unit,
     onGoToMap: () -> Unit,
     onDismissBanner: () -> Unit,
     modifier: Modifier = Modifier
@@ -115,7 +116,8 @@ fun AuthScreen(
             ActiveSessionCard(
                 userName = uiState.activeUserName,
                 email = session.email,
-                onGoToMap = onGoToMap
+                onGoToMap = onGoToMap,
+                onLogout = onLogout
             )
         } else {
             Row(
@@ -406,7 +408,7 @@ private fun PasswordStrength(password: String) {
 }
 
 @Composable
-private fun ActiveSessionCard(userName: String?, email: String, onGoToMap: () -> Unit) {
+private fun ActiveSessionCard(userName: String?, email: String, onGoToMap: () -> Unit, onLogout: () -> Unit) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -424,6 +426,9 @@ private fun ActiveSessionCard(userName: String?, email: String, onGoToMap: () ->
             }
             Button(onClick = onGoToMap, modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = AuthTeal)) {
                 Text("Explorar mapa y guardar lugares")
+            }
+            TextButton(onClick = onLogout, modifier = Modifier.fillMaxWidth()) {
+                Text("Cerrar sesión", color = MaterialTheme.colorScheme.error)
             }
         }
     }

@@ -187,6 +187,31 @@ class AuthViewModel(
         }
     }
 
+    fun logout() {
+        try {
+            authService.logout()
+            _uiState.update {
+                it.copy(
+                    activeSession = null,
+                    activeUserName = null,
+                    banner = StatusBanner(
+                        message = "Sesión cerrada correctamente.",
+                        kind = BannerKind.SUCCESS
+                    )
+                )
+            }
+        } catch (ex: RuntimeException) {
+            _uiState.update {
+                it.copy(
+                    banner = StatusBanner(
+                        message = ex.message ?: "No se pudo cerrar la sesión.",
+                        kind = BannerKind.ERROR
+                    )
+                )
+            }
+        }
+    }
+
     fun dismissBanner() {
         _uiState.update { it.copy(banner = null) }
     }
