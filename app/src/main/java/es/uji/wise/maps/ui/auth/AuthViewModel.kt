@@ -22,14 +22,17 @@ data class AuthUiState(
     val nombre: String = "",
     val email: String = "",
     val password: String = "",
+    val passwordVisible: Boolean = false,
+    val rememberSession: Boolean = true,
+    val acceptsTerms: Boolean = false,
     val activeSession: Session? = null,
     val activeUserName: String? = null,
     val banner: StatusBanner? = null
 )
 
 /**
- * ViewModel MVVM (Unidirectional Data Flow) para las historias R1:
- * HU-01 (Registro), HU-02 (Inicio de sesión) y HU-03 (Cierre de sesión).
+ * ViewModel MVVM (Unidirectional Data Flow) para HU-01 (Registro) y
+ * HU-02 (Inicio de sesión).
  */
 class AuthViewModel(
     private val authService: AuthService,
@@ -61,6 +64,29 @@ class AuthViewModel(
 
     fun onPasswordChange(value: String) {
         _uiState.update { it.copy(password = value) }
+    }
+
+    fun togglePasswordVisibility() {
+        _uiState.update { it.copy(passwordVisible = !it.passwordVisible) }
+    }
+
+    fun onRememberSessionChange(remember: Boolean) {
+        _uiState.update { it.copy(rememberSession = remember) }
+    }
+
+    fun onTermsAcceptanceChange(accepted: Boolean) {
+        _uiState.update { it.copy(acceptsTerms = accepted) }
+    }
+
+    fun requestPasswordRecovery() {
+        _uiState.update {
+            it.copy(
+                banner = StatusBanner(
+                    message = "Para recuperar tu contraseña, contacta con el administrador.",
+                    kind = BannerKind.INFO
+                )
+            )
+        }
     }
 
     fun fillDemoAccount() {
@@ -154,40 +180,6 @@ class AuthViewModel(
                 it.copy(
                     banner = StatusBanner(
                         message = ex.message ?: "No se pudo iniciar sesión.",
-                        kind = BannerKind.ERROR
-                    )
-                )
-            }
-        }
-    }
-
-    fun logout() {
-        try {
-            authService.logout()
-            _uiState.update {
-                it.copy(
-                    activeSession = sessionManager.sesionActiva,
-                    activeUserName = null,
-                    banner = StatusBanner(
-                        message = "Sesión cerrada correctamente.",
-                        kind = BannerKind.SUCCESS
-                    )
-                )
-            }
-        } catch (_: NotImplementedError) {
-            _uiState.update {
-                it.copy(
-                    banner = StatusBanner(
-                        message = "HU-03 (Cierre de sesión) pendiente de fusionar la rama h-03 en it-01.",
-                        kind = BannerKind.INFO
-                    )
-                )
-            }
-        } catch (ex: RuntimeException) {
-            _uiState.update {
-                it.copy(
-                    banner = StatusBanner(
-                        message = ex.message ?: "No se pudo cerrar sesión.",
                         kind = BannerKind.ERROR
                     )
                 )

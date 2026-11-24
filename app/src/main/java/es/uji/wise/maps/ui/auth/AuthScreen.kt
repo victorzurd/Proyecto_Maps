@@ -1,6 +1,8 @@
 package es.uji.wise.maps.ui.auth
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,35 +15,33 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -49,11 +49,13 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import es.uji.wise.maps.ui.components.StatusBannerCard
 import es.uji.wise.maps.ui.theme.WiseIcons
-import es.uji.wise.maps.ui.theme.WiseOrange
-import es.uji.wise.maps.ui.theme.WisePlum
-import es.uji.wise.maps.ui.theme.WisePlumDark
-import es.uji.wise.maps.ui.theme.WiseSuccess
-import es.uji.wise.maps.ui.theme.WiseSuccessContainer
+
+private val AuthTeal = Color(0xFF00685F)
+private val AuthInk = Color(0xFF0B1C30)
+private val AuthMuted = Color(0xFF566275)
+private val AuthCanvas = Color(0xFFF8F9FF)
+private val AuthTint = Color(0xFFEFF4FF)
+private val AuthTab = Color(0xFFE5EEFF)
 
 @Composable
 fun AuthScreen(
@@ -62,146 +64,200 @@ fun AuthScreen(
     onNombreChange: (String) -> Unit,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
-    onFillDemo: () -> Unit,
+    onTogglePasswordVisibility: () -> Unit,
+    onRememberSessionChange: (Boolean) -> Unit,
+    onTermsAcceptanceChange: (Boolean) -> Unit,
+    onRequestPasswordRecovery: () -> Unit,
     onSubmit: () -> Unit,
-    onLogout: () -> Unit,
     onGoToMap: () -> Unit,
     onDismissBanner: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var passwordVisible by rememberSaveable { mutableStateOf(false) }
-
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(AuthCanvas)
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = 16.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        BrandHeroBanner()
-
-        uiState.banner?.let { banner ->
-            StatusBannerCard(banner = banner, onDismiss = onDismissBanner)
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp, bottom = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color(0xFFD0D0D0)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("img", color = Color(0xFF555555), style = MaterialTheme.typography.bodyMedium)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Wise", style = MaterialTheme.typography.headlineSmall, color = AuthInk, fontWeight = FontWeight.Bold)
+                Surface(color = Color(0xFFDAE2FD), shape = CircleShape) {
+                    Text("v2.4", color = AuthMuted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp))
+                }
+            }
+            Text(
+                "Tu gestor inteligente de rutas, vehículos y lugares de interés.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = AuthMuted,
+                modifier = Modifier.padding(horizontal = 18.dp)
+            )
         }
 
         val session = uiState.activeSession
         if (session != null && session.autenticado) {
+            uiState.banner?.let { StatusBannerCard(banner = it, onDismiss = onDismissBanner) }
             ActiveSessionCard(
                 userName = uiState.activeUserName,
                 email = session.email,
-                onGoToMap = onGoToMap,
-                onLogout = onLogout
+                onGoToMap = onGoToMap
             )
         } else {
+            Row(
+                modifier = Modifier.fillMaxWidth().clip(CircleShape).background(AuthTab).padding(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AuthModeTab("Iniciar Sesión", WiseIcons.Login, uiState.mode == AuthMode.LOGIN, Modifier.weight(1f)) { onSelectMode(AuthMode.LOGIN) }
+                AuthModeTab("Crear Cuenta", WiseIcons.PersonAdd, uiState.mode == AuthMode.REGISTER, Modifier.weight(1f)) { onSelectMode(AuthMode.REGISTER) }
+            }
+
+            uiState.banner?.let { StatusBannerCard(banner = it, onDismiss = onDismissBanner) }
+
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.large,
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.elevatedCardColors(containerColor = Color.White),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
             ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                    modifier = Modifier.fillMaxWidth().padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                        SegmentedButton(
-                            selected = uiState.mode == AuthMode.LOGIN,
-                            onClick = { onSelectMode(AuthMode.LOGIN) },
-                            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
-                            label = { Text("Iniciar sesión") }
-                        )
-                        SegmentedButton(
-                            selected = uiState.mode == AuthMode.REGISTER,
-                            onClick = { onSelectMode(AuthMode.REGISTER) },
-                            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
-                            label = { Text("Crear cuenta") }
-                        )
-                    }
-
-                    Text(
-                        text = if (uiState.mode == AuthMode.LOGIN) {
-                            "Accede con tu cuenta (HU-02)"
-                        } else {
-                            "Regístrate en Wise Maps (HU-01)"
-                        },
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
                     if (uiState.mode == AuthMode.REGISTER) {
-                        OutlinedTextField(
+                        AuthField(
                             value = uiState.nombre,
                             onValueChange = onNombreChange,
-                            label = { Text("Nombre completo") },
-                            placeholder = { Text("Ej. María García") },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth()
+                            label = "Nombre Completo",
+                            placeholder = "Carlos Mendoza Ríos",
+                            leading = WiseIcons.Badge,
+                            keyboardType = KeyboardType.Text
                         )
                     }
 
-                    OutlinedTextField(
-                        value = uiState.email,
-                        onValueChange = onEmailChange,
-                        label = { Text("Correo electrónico") },
-                        placeholder = { Text("usuario@example.com") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    val emailValid = uiState.email.matches(Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"))
+                    val emailStatusColor = when {
+                        emailValid -> AuthTeal
+                        uiState.email.isBlank() -> AuthMuted
+                        else -> MaterialTheme.colorScheme.error
+                    }
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text("Correo Electrónico", style = MaterialTheme.typography.bodySmall, color = AuthMuted, fontWeight = FontWeight.SemiBold)
+                            if (uiState.mode == AuthMode.REGISTER) {
+                                val emailLabel = if (uiState.email.isBlank()) "Formato requerido" else if (emailValid) "Formato válido" else "Correo incompleto"
+                                Text(emailLabel, style = MaterialTheme.typography.labelSmall, color = emailStatusColor)
+                            }
+                        }
+                        AuthInput(
+                            value = uiState.email,
+                            onValueChange = onEmailChange,
+                            placeholder = if (uiState.mode == AuthMode.REGISTER) "conductor@wise.com" else "ejemplo@wise.com",
+                            leading = WiseIcons.Email,
+                            trailing = if (uiState.mode == AuthMode.REGISTER) {
+                                if (uiState.email.isBlank()) WiseIcons.Email else if (uiState.email.matches(Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"))) WiseIcons.Check else WiseIcons.Close
+                            } else null,
+                            trailingTint = emailStatusColor,
+                            keyboardType = KeyboardType.Email
+                        )
+                    }
 
-                    OutlinedTextField(
-                        value = uiState.password,
-                        onValueChange = onPasswordChange,
-                        label = { Text("Contraseña") },
-                        placeholder = { Text("Mínimo 8 caracteres") },
-                        singleLine = true,
-                        visualTransformation = if (passwordVisible) {
-                            VisualTransformation.None
-                        } else {
-                            PasswordVisualTransformation()
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                        trailingIcon = {
-                            TextButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Contraseña", style = MaterialTheme.typography.bodySmall, color = AuthMuted, fontWeight = FontWeight.SemiBold)
+                            if (uiState.mode == AuthMode.LOGIN) {
                                 Text(
-                                    text = if (passwordVisible) "Ocultar" else "Ver",
-                                    style = MaterialTheme.typography.labelLarge
+                                    "¿Olvidaste tu contraseña?",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = AuthTeal,
+                                    modifier = Modifier.clickable(onClick = onRequestPasswordRecovery)
                                 )
                             }
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                        }
+                        AuthInput(
+                            value = uiState.password,
+                            onValueChange = onPasswordChange,
+                            placeholder = if (uiState.mode == AuthMode.REGISTER) "Mínimo 8 caracteres" else "••••••••••••",
+                            leading = WiseIcons.Lock,
+                            trailing = WiseIcons.Visibility,
+                            onTrailingClick = onTogglePasswordVisibility,
+                            keyboardType = KeyboardType.Password,
+                            visualTransformation = if (uiState.passwordVisible) VisualTransformation.None else PasswordVisualTransformation()
+                        )
+                    }
+
+                    if (uiState.mode == AuthMode.REGISTER) {
+                        PasswordStrength(password = uiState.password)
+                        Row(
+                            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(AuthTint).padding(horizontal = 8.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            AuthCheckbox(checked = uiState.acceptsTerms, onCheckedChange = onTermsAcceptanceChange)
+                            Text(
+                                buildAnnotatedString {
+                                    append("Acepto las ")
+                                    withStyle(SpanStyle(color = AuthTeal, fontWeight = FontWeight.SemiBold, textDecoration = TextDecoration.Underline)) { append("Condiciones de Servicio") }
+                                    append(" y la política de privacidad y gestión de flota.")
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = AuthMuted
+                            )
+                        }
+                    } else {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                AuthCheckbox(checked = uiState.rememberSession, onCheckedChange = onRememberSessionChange)
+                                Text("Recordar sesión", style = MaterialTheme.typography.bodySmall, color = AuthMuted)
+                            }
+                            Surface(color = Color(0xFFDDF8F3), shape = CircleShape) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                ) {
+                                    Box(Modifier.size(7.dp).clip(CircleShape).background(AuthTeal))
+                                    Text("GPS activo", style = MaterialTheme.typography.labelSmall, color = AuthTeal)
+                                }
+                            }
+                        }
+                    }
 
                     Button(
                         onClick = onSubmit,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(48.dp),
-                        shape = MaterialTheme.shapes.medium
+                        modifier = Modifier.fillMaxWidth().height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = AuthTeal, contentColor = Color.White)
                     ) {
-                        Text(
-                            text = if (uiState.mode == AuthMode.LOGIN) {
-                                "Iniciar sesión"
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(if (uiState.mode == AuthMode.LOGIN) "Iniciar sesión" else "Crear Cuenta en Wise", fontWeight = FontWeight.SemiBold)
+                            if (uiState.mode == AuthMode.LOGIN) {
+                                Text("→", fontWeight = FontWeight.SemiBold)
                             } else {
-                                "Crear cuenta"
+                                Icon(WiseIcons.Check, contentDescription = null, modifier = Modifier.size(20.dp))
                             }
-                        )
-                    }
-
-                    FilledTonalButton(
-                        onClick = onFillDemo,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.medium
-                    ) {
-                        Text(
-                            text = if (uiState.mode == AuthMode.LOGIN) {
-                                "Rellenar cuenta demo (juan@example.com)"
-                            } else {
-                                "Rellenar datos de prueba"
-                            }
-                        )
+                        }
                     }
                 }
             }
@@ -210,158 +266,164 @@ fun AuthScreen(
 }
 
 @Composable
-private fun BrandHeroBanner() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.large)
-            .background(
-                Brush.linearGradient(
-                    colors = listOf(WisePlum, WisePlumDark)
-                )
-            )
-            .padding(20.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(50.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Color.White.copy(alpha = 0.16f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = WiseIcons.MapPin,
-                    contentDescription = null,
-                    tint = WiseOrange,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(
-                    text = "Wise Maps",
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = Color.White
-                )
-                Text(
-                    text = "Lugares, rutas y movilidad inteligente · IT-01",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.88f)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ActiveSessionCard(
-    userName: String?,
-    email: String,
-    onGoToMap: () -> Unit,
-    onLogout: () -> Unit
-) {
-    val initials = (userName ?: email)
-        .trim()
-        .split(" ")
-        .filter { it.isNotBlank() }
-        .take(2)
-        .joinToString("") { it.first().uppercaseChar().toString() }
-        .ifEmpty { "WM" }
-
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+private fun AuthModeTab(label: String, icon: ImageVector, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    TextButton(
+        onClick = onClick,
+        modifier = modifier.height(40.dp),
+        shape = CircleShape,
+        colors = ButtonDefaults.textButtonColors(
+            containerColor = if (selected) Color.White else Color.Transparent,
+            contentColor = if (selected) AuthTeal else AuthMuted
         )
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
+            Text(label, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium)
+        }
+    }
+}
+
+@Composable
+private fun AuthField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String,
+    leading: ImageVector,
+    keyboardType: KeyboardType
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(label, style = MaterialTheme.typography.bodySmall, color = AuthMuted, fontWeight = FontWeight.SemiBold)
+        AuthInput(
+            value = value,
+            onValueChange = onValueChange,
+            placeholder = placeholder,
+            leading = leading,
+            keyboardType = keyboardType
+        )
+    }
+}
+
+@Composable
+private fun AuthInput(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    leading: ImageVector,
+    keyboardType: KeyboardType,
+    trailing: ImageVector? = null,
+    trailingTint: Color = AuthMuted,
+    onTrailingClick: (() -> Unit)? = null,
+    visualTransformation: VisualTransformation = VisualTransformation.None
+) {
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
+        textStyle = MaterialTheme.typography.bodyMedium.copy(color = AuthInk),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+        visualTransformation = visualTransformation,
+        cursorBrush = SolidColor(AuthTeal),
+        decorationBox = { innerTextField ->
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(44.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(AuthTint)
+                    .padding(horizontal = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(54.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = initials,
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                Icon(leading, contentDescription = null, tint = AuthMuted, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(12.dp))
+                Box(Modifier.weight(1f)) {
+                    if (value.isEmpty()) {
+                        Text(placeholder, style = MaterialTheme.typography.bodyMedium, color = AuthMuted)
+                    }
+                    innerTextField()
                 }
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(
-                        text = userName ?: "Usuario Wise Maps",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    Text(
-                        text = email,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Surface(
-                        color = WiseSuccessContainer,
-                        shape = RoundedCornerShape(999.dp)
-                    ) {
-                        Text(
-                            text = "Sesión activa",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = WiseSuccess,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
-                        )
+                if (trailing != null) {
+                    Spacer(Modifier.width(8.dp))
+                    val trailingModifier = if (onTrailingClick != null) {
+                        Modifier.size(28.dp).clip(CircleShape).clickable(onClick = onTrailingClick)
+                    } else {
+                        Modifier
+                    }
+                    Box(modifier = trailingModifier, contentAlignment = Alignment.Center) {
+                        Icon(trailing, contentDescription = null, tint = trailingTint, modifier = Modifier.size(20.dp))
                     }
                 }
             }
+        }
+    )
+}
 
-            Button(
-                onClick = onGoToMap,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(46.dp),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Icon(
-                    imageVector = WiseIcons.MapPin,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
+@Composable
+private fun AuthCheckbox(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Box(
+        modifier = Modifier
+            .padding(4.dp)
+            .size(18.dp)
+            .clip(RoundedCornerShape(3.dp))
+            .background(if (checked) AuthTeal else Color.White)
+            .border(1.dp, if (checked) AuthTeal else AuthMuted, RoundedCornerShape(3.dp))
+            .toggleable(value = checked, onValueChange = onCheckedChange, role = Role.Checkbox),
+        contentAlignment = Alignment.Center
+    ) {
+        if (checked) Icon(WiseIcons.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+    }
+}
+
+@Composable
+private fun PasswordStrength(password: String) {
+    val score = listOf(
+        password.length >= 6,
+        password.length >= 8 && password.any(Char::isDigit),
+        password.any(Char::isUpperCase) && password.any(Char::isLowerCase),
+        password.any { !it.isLetterOrDigit() }
+    ).count { it }
+    val labels = listOf("Sin ingresar", "Débil", "Media", "Buena", "Excelente")
+    val color = when (score) {
+        0, 1 -> Color(0xFFBA1A1A)
+        2 -> Color(0xFF825100)
+        else -> AuthTeal
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("Robustez de clave", style = MaterialTheme.typography.labelSmall, color = AuthMuted)
+            Text(labels[score], style = MaterialTheme.typography.labelSmall, color = if (score == 0) AuthMuted else color)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+            repeat(4) { index ->
+                Box(
+                    Modifier.weight(1f).height(5.dp).clip(CircleShape)
+                        .background(if (score > index) color else Color(0xFFDCE9FF))
                 )
-                Spacer(Modifier.width(8.dp))
-                Text("Explorar mapa y guardar lugares")
             }
+        }
+    }
+}
 
-            OutlinedButton(
-                onClick = onLogout,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(46.dp),
-                shape = MaterialTheme.shapes.medium,
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = MaterialTheme.colorScheme.error
-                )
-            ) {
-                Icon(
-                    imageVector = WiseIcons.Logout,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(Modifier.width(8.dp))
-                Text("Cerrar sesión (HU-03)")
+@Composable
+private fun ActiveSessionCard(userName: String?, email: String, onGoToMap: () -> Unit) {
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.elevatedCardColors(containerColor = Color.White)
+    ) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                Box(Modifier.size(52.dp).clip(CircleShape).background(Color(0xFFDDF8F3)), contentAlignment = Alignment.Center) {
+                    Icon(WiseIcons.Account, contentDescription = null, tint = AuthTeal)
+                }
+                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text(userName ?: "Usuario Wise Maps", style = MaterialTheme.typography.titleLarge, color = AuthInk)
+                    Text(email, style = MaterialTheme.typography.bodyMedium, color = AuthMuted)
+                }
+            }
+            Button(onClick = onGoToMap, modifier = Modifier.fillMaxWidth().height(50.dp), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = AuthTeal)) {
+                Text("Explorar mapa y guardar lugares")
             }
         }
     }

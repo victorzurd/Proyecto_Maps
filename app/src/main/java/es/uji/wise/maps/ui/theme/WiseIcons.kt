@@ -13,6 +13,66 @@ import androidx.compose.ui.unit.dp
  */
 object WiseIcons {
 
+    val Login: ImageVector by lazy {
+        icon("WiseLogin") {
+            path(stroke = SolidColor(Color.Black), strokeLineWidth = 2f, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round) {
+                moveTo(10f, 3f); lineTo(4f, 3f); lineTo(4f, 21f); lineTo(10f, 21f)
+                moveTo(14f, 7f); lineTo(19f, 12f); lineTo(14f, 17f)
+                moveTo(19f, 12f); lineTo(8f, 12f)
+            }
+        }
+    }
+
+    val PersonAdd: ImageVector by lazy {
+        icon("WisePersonAdd") {
+            path(stroke = SolidColor(Color.Black), strokeLineWidth = 2f, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round) {
+                moveTo(15f, 20f); lineTo(15f, 19f); curveTo(15f, 16.8f, 12.8f, 15f, 9f, 15f); curveTo(5.2f, 15f, 3f, 16.8f, 3f, 19f); lineTo(3f, 20f)
+                moveTo(9f, 11f); arcTo(3.5f, 3.5f, 0f, true, false, 9f, 4f); arcTo(3.5f, 3.5f, 0f, true, false, 9f, 11f)
+                moveTo(19f, 8f); lineTo(19f, 14f); moveTo(16f, 11f); lineTo(22f, 11f)
+            }
+        }
+    }
+
+    val Badge: ImageVector by lazy {
+        icon("WiseBadge") {
+            path(stroke = SolidColor(Color.Black), strokeLineWidth = 2f, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round) {
+                moveTo(5f, 4f); lineTo(19f, 4f); lineTo(19f, 21f); lineTo(5f, 21f); close()
+                moveTo(9f, 4f); lineTo(9f, 2f); lineTo(15f, 2f); lineTo(15f, 4f)
+                moveTo(12f, 8f); arcTo(2f, 2f, 0f, true, false, 12f, 12f); arcTo(2f, 2f, 0f, true, false, 12f, 8f)
+                moveTo(8f, 17f); curveTo(8f, 15.2f, 9.6f, 14f, 12f, 14f); curveTo(14.4f, 14f, 16f, 15.2f, 16f, 17f)
+            }
+        }
+    }
+
+    val Email: ImageVector by lazy {
+        icon("WiseEmail") {
+            path(stroke = SolidColor(Color.Black), strokeLineWidth = 2f, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round) {
+                moveTo(3f, 5f); lineTo(21f, 5f); lineTo(21f, 19f); lineTo(3f, 19f); close()
+                moveTo(3f, 7f); lineTo(12f, 13f); lineTo(21f, 7f)
+            }
+        }
+    }
+
+    val Lock: ImageVector by lazy {
+        icon("WiseLock") {
+            path(stroke = SolidColor(Color.Black), strokeLineWidth = 2f, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round) {
+                moveTo(5f, 11f); lineTo(19f, 11f); lineTo(19f, 21f); lineTo(5f, 21f); close()
+                moveTo(8f, 11f); lineTo(8f, 7f); curveTo(8f, 1.5f, 16f, 1.5f, 16f, 7f); lineTo(16f, 11f)
+                moveTo(12f, 15f); lineTo(12f, 17f)
+            }
+        }
+    }
+
+    val Visibility: ImageVector by lazy {
+        icon("WiseVisibility") {
+            path(stroke = SolidColor(Color.Black), strokeLineWidth = 2f, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round) {
+                moveTo(2f, 12f); curveTo(4.5f, 7.5f, 8f, 5f, 12f, 5f); curveTo(16f, 5f, 19.5f, 7.5f, 22f, 12f)
+                curveTo(19.5f, 16.5f, 16f, 19f, 12f, 19f); curveTo(8f, 19f, 4.5f, 16.5f, 2f, 12f); close()
+                moveTo(15f, 12f); arcTo(3f, 3f, 0f, true, false, 9f, 12f); arcTo(3f, 3f, 0f, true, false, 15f, 12f)
+            }
+        }
+    }
+
     val Account: ImageVector by lazy {
         icon("WiseAccount") {
             path(fill = SolidColor(Color.Black)) {

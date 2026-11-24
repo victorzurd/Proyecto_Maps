@@ -24,7 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,9 +64,10 @@ fun WiseMapsApp(
     val authState by authViewModel.uiState.collectAsStateWithLifecycle()
     val placesState by placesViewModel.uiState.collectAsStateWithLifecycle()
 
-    var currentDestination by rememberSaveable { mutableStateOf(WiseDestination.MAP) }
-
     val isAuthenticated = authState.activeSession?.autenticado == true
+    var currentDestination by remember(authState.activeSession?.email) {
+        mutableStateOf(if (isAuthenticated) WiseDestination.MAP else WiseDestination.ACCOUNT)
+    }
 
     LaunchedEffect(authState.activeSession?.email, isAuthenticated) {
         placesViewModel.onSessionChanged(isAuthenticated)
@@ -76,7 +77,7 @@ fun WiseMapsApp(
         modifier = Modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
+            if (isAuthenticated) TopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface
                 ),
@@ -138,7 +139,7 @@ fun WiseMapsApp(
             )
         },
         bottomBar = {
-            NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+            if (isAuthenticated) NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                 WiseDestination.entries.forEach { destination ->
                     NavigationBarItem(
                         selected = currentDestination == destination,
@@ -168,17 +169,20 @@ fun WiseMapsApp(
         val screenModifier = Modifier
             .fillMaxSize()
             .padding(innerPadding)
+        val visibleDestination = if (isAuthenticated) currentDestination else WiseDestination.ACCOUNT
 
-        when (currentDestination) {
+        when (visibleDestination) {
             WiseDestination.ACCOUNT -> AuthScreen(
                 uiState = authState,
                 onSelectMode = authViewModel::selectMode,
                 onNombreChange = authViewModel::onNombreChange,
                 onEmailChange = authViewModel::onEmailChange,
                 onPasswordChange = authViewModel::onPasswordChange,
-                onFillDemo = authViewModel::fillDemoAccount,
+                onTogglePasswordVisibility = authViewModel::togglePasswordVisibility,
+                onRememberSessionChange = authViewModel::onRememberSessionChange,
+                onTermsAcceptanceChange = authViewModel::onTermsAcceptanceChange,
+                onRequestPasswordRecovery = authViewModel::requestPasswordRecovery,
                 onSubmit = authViewModel::submit,
-                onLogout = authViewModel::logout,
                 onGoToMap = { currentDestination = WiseDestination.MAP },
                 onDismissBanner = authViewModel::dismissBanner,
                 modifier = screenModifier
