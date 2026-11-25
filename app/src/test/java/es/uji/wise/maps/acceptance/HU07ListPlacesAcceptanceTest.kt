@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test
 class HU07ListPlacesAcceptanceTest {
 
     @Test
-    fun E1 Valido - Consulta con lugares registrados y ordenacion() {
+    fun `E1 Valido - Consulta con lugares registrados y ordenacion`() {
         // GIVEN un usuario autenticado con los siguientes lugares guardados
         val email = "juan@example.com"
         val sessionManager = SessionManager(Session(email = email, autenticado = true))
@@ -41,7 +41,7 @@ class HU07ListPlacesAcceptanceTest {
     }
 
     @Test
-    fun E3 Invalido - Consulta sin autenticacion() {
+    fun `E3 Invalido - Consulta sin autenticacion`() {
         // GIVEN un entorno sin sesión activa
         val sessionManager = SessionManager(initialSession = null)
         val placeRepository = InMemoryPlaceRepository()
