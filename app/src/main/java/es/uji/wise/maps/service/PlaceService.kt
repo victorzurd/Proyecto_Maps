@@ -1,6 +1,7 @@
 package es.uji.wise.maps.service
 
 import es.uji.wise.maps.model.PlaceOfInterest
+import es.uji.wise.maps.model.UnauthorizedActionException
 import es.uji.wise.maps.repository.PlaceRepository
 
 class PlaceService(
@@ -18,7 +19,16 @@ class PlaceService(
      * HU-07: Consulta de la lista de lugares de interés
      */
     fun getPlaces(): List<PlaceOfInterest> {
-        throw NotImplementedError("Not implemented")
+        val session = sessionManager.sesionActiva
+        if (session == null || !session.autenticado) {
+            throw UnauthorizedActionException("Acción no autorizada")
+        }
+
+        return placeRepository.findAllByUser(session.email)
+            .sortedWith(
+                compareByDescending<PlaceOfInterest> { it.favorito }
+                    .thenBy { it.ordenAlta }
+            )
     }
 }
 
