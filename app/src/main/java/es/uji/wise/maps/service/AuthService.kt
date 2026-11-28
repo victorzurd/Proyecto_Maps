@@ -1,0 +1,69 @@
+package es.uji.wise.maps.service
+
+import es.uji.wise.maps.model.DuplicateUserException
+import es.uji.wise.maps.model.InvalidUserDataException
+import es.uji.wise.maps.model.Session
+import es.uji.wise.maps.model.User
+import es.uji.wise.maps.model.InvalidCredentialsException
+import es.uji.wise.maps.model.NoActiveSessionException
+import es.uji.wise.maps.repository.UserRepository
+
+class AuthService(
+    private val userRepository: UserRepository,
+    private val sessionManager: SessionManager
+) {
+    /**
+     * HU-01: Registro de usuario
+     */
+    fun register(nombre: String, email: String, password: String): User {
+        val cleanName = nombre.trim()
+        val normalizedEmail = email.trim().lowercase()
+
+        if (cleanName.isBlank()) {
+            throw InvalidUserDataException("El nombre no puede estar vacío")
+        }
+        if (!EMAIL_REGEX.matches(normalizedEmail)) {
+            throw InvalidUserDataException("Formato de correo inválido")
+        }
+        if (password.length < MIN_PASSWORD_LENGTH) {
+            throw InvalidUserDataException("La contraseña debe tener al menos 8 caracteres")
+        }
+        if (userRepository.findByEmail(normalizedEmail) != null) {
+            throw DuplicateUserException("El usuario con este correo ya existe")
+        }
+
+        val newUser = User(nombre = cleanName, email = normalizedEmail, password = password)
+        userRepository.save(newUser)
+        return newUser
+    }
+
+    /**
+     * HU-02: Inicio de sesión
+     */
+    fun login(email: String, password: String): Session {
+        val user = userRepository.findByEmail(email.trim())
+        if (user == null || user.password == null || user.password != password) {
+            throw InvalidCredentialsException()
+        }
+
+        return Session(email = user.email, autenticado = true).also {
+            sessionManager.sesionActiva = it
+        }
+    }
+
+    /**
+     * HU-03: Cierre de sesión
+     */
+    fun logout() {
+        if (sessionManager.sesionActiva == null) {
+            throw NoActiveSessionException()
+        }
+        sessionManager.sesionActiva = null
+    }
+
+    companion object {
+        private const val MIN_PASSWORD_LENGTH = 8
+        private val EMAIL_REGEX = Regex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")
+    }
+}
+
